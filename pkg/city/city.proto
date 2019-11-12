@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package city;
+
+// The greeting service definition.
+service CityManager{
+    // get city list
+    rpc CityList (CityQuery) returns (Citys) {};
+    rpc AreaList (AreaQuery) returns (Areas) {};
+}
+
+message CityQuery {
+	string citycode = 1;
+}
+
+message Citys {
+    repeated City Citys = 1;
+}
+
+// The request message containing the user's name.
+message City{
+    string name = 1;
+	string citycode = 2;
+}
+
+
+message AreaQuery {
+	string citycode = 1;
+}
+
+message Areas{
+    repeated  Area Areas = 1;
+}
+
+message Area {
+    string name = 1;
+	string citycode = 2;
+}

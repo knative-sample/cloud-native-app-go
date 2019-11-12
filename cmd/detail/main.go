@@ -13,6 +13,7 @@ import (
 	"github.com/knative-sample/cloud-native-app-go/weather/pkg/utils/signals"
 )
 
+//go:generate protoc -I ../../pkg/detail --go_out=plugins=grpc:../../pkg/detail ../../pkg/detail/detail.proto
 func main() {
 	rand.Seed(time.Now().UTC().UnixNano())
 

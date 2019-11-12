@@ -38,8 +38,19 @@ func run(stopCh <-chan struct{}, ops *options.Options) {
 		os.Exit(0)
 	}
 
-	cm := &city.CityManager{
+	if ops.ZipKinEndpoint == "" {
+		glog.Fatalf("zipkin --zipkin-endpoint is empty")
+	}
+	instanceIp := os.Getenv("INSTANCE_IP")
+	if instanceIp == "" {
+		instanceIp = "127.0.0.1"
+	}
+
+	cm := &city.Server{
 		Port:             ops.Port,
+		InstanceIp:       instanceIp,
+		ServiceName:      ops.ServiceName,
+		ZipKinEndpoint:   ops.ZipKinEndpoint,
 		TableStoreConfig: &db.TableStoreConfig{},
 	}
 	go func() {

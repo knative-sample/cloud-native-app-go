@@ -48,9 +48,21 @@ func run(stopCh <-chan struct{}, ops *options.Options) {
 		glog.Fatalf("parse DetailService:%s error:%s", ops.DetailService)
 	}
 
+	if ops.ZipKinEndpoint == "" {
+		glog.Fatalf("zipkin --zipkin-endpoint is empty")
+	}
+
+	instanceIp := os.Getenv("INSTANCE_IP")
+	if instanceIp == "" {
+		instanceIp = "127.0.0.1"
+	}
+
 	wa := weather.WebApi{
-		Port:         ops.Port,
-		ResourceRoot: ops.ResourceRoot,
+		Port:           ops.Port,
+		ZipKinEndpoint: ops.ZipKinEndpoint,
+		InstanceIp:     instanceIp,
+		ServiceName:    ops.ServiceName,
+		ResourceRoot:   ops.ResourceRoot,
 		CityService: &weather.Service{
 			Host: cityHost,
 			Port: cityPort,

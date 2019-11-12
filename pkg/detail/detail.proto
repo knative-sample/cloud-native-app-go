@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package detail;
+
+// The greeting service definition.
+service Detail {
+    rpc GetDetail(DetailQuery) returns (DetailInfo) {};
+}
+
+message DetailQuery {
+	string citycode = 1;
+	string date = 2;
+}
+
+message DetailInfo{
+    string adcode      = 1;
+    string name        = 2;
+    string date        = 3;
+    string daypower    = 4;
+    string daytemp     = 5;
+    string dayweather  = 6;
+    string daywind     = 7;
+    string nightpower  = 8;
+    string nighttemp   = 9;
+    string nightweather = 10;
+    string nightwind   = 11;
+    string province    = 12;
+    string reporttime  = 13;
+    string week        = 14;
+}
+
