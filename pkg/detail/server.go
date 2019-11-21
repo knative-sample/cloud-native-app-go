@@ -38,22 +38,26 @@ func (s *Server) GetDetail(ctx context.Context, in *DetailQuery) (*DetailInfo, e
 		//do some operations
 		time.Sleep(time.Millisecond * 10)
 	}
-
+	w, err := s.TableStoreConfig.QueryWeather(in.GetCitycode(), in.Date)
+	if err != nil {
+		log.Printf("QueryWeather error %s", err.Error())
+		return nil, err
+	}
 	return &DetailInfo{
 		Adcode:       in.GetCitycode(),
-		Name:         "西湖区",
-		Date:         "2019-09-26",
-		Daypower:     "5",
-		Daytemp:      "30",
-		Dayweather:   "晴",
-		Daywind:      "东",
-		Nightpower:   "5",
-		Nighttemp:    "19",
-		Nightweather: "晴",
-		Nightwind:    "东",
-		Province:     "浙江",
-		Reporttime:   "2019-09-26 22:49:20",
-		Week:         "4",
+		Name:         w.City,
+		Date:         w.Date,
+		Daypower:     w.Daypower,
+		Daytemp:      w.Daytemp,
+		Dayweather:   w.Dayweather,
+		Daywind:      w.Daywind,
+		Nightpower:   w.Nightpower,
+		Nighttemp:    w.Nighttemp,
+		Nightweather: w.Nightweather,
+		Nightwind:    w.Nightwind,
+		Province:     w.Province,
+		Reporttime:   w.Reporttime,
+		Week:         w.Week,
 	}, nil
 }
 

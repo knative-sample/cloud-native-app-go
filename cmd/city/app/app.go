@@ -45,13 +45,23 @@ func run(stopCh <-chan struct{}, ops *options.Options) {
 	if instanceIp == "" {
 		instanceIp = "127.0.0.1"
 	}
-
+	endpoint := os.Getenv("OTS_ENDPOINT")
+	tableName := os.Getenv("TABLE_NAME")
+	instanceName := os.Getenv("OTS_INSTANCENAME")
+	accessKeyId := os.Getenv("OTS_KEYID")
+	accessKeySecret := os.Getenv("OTS_SECRET")
 	cm := &city.Server{
-		Port:             ops.Port,
-		InstanceIp:       instanceIp,
-		ServiceName:      ops.ServiceName,
-		ZipKinEndpoint:   ops.ZipKinEndpoint,
-		TableStoreConfig: &db.TableStoreConfig{},
+		Port:           ops.Port,
+		InstanceIp:     instanceIp,
+		ServiceName:    ops.ServiceName,
+		ZipKinEndpoint: ops.ZipKinEndpoint,
+		TableStoreConfig: &db.TableStoreConfig{
+			Endpoint:        endpoint,
+			TableName:       tableName,
+			InstanceName:    instanceName,
+			AccessKeyId:     accessKeyId,
+			AccessKeySecret: accessKeySecret,
+		},
 	}
 	go func() {
 		if err := cm.Start(); err != nil {

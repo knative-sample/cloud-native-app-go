@@ -38,23 +38,20 @@ func (s *Server) CityList(ctx context.Context, in *CityQuery) (*Citys, error) {
 		//do some operations
 		time.Sleep(time.Millisecond * 10)
 	}
-
-	return &Citys{
-		Citys: []*City{
-			{
-				Citycode: "010",
-				Name:     "北京市",
-			},
-			{
-				Citycode: "0571",
-				Name:     "杭州市",
-			},
-			{
-				Citycode: "0512",
-				Name:     "苏州市",
-			},
-		},
-	}, nil
+	cities, err := s.TableStoreConfig.QueryCities()
+	if err != nil {
+		log.Printf("QueryCities error %s", err.Error())
+		return nil, err
+	}
+	cs := make([]*City, 0)
+	for _, city := range cities {
+		c := &City{
+			Name:     city.Name,
+			Citycode: city.Citycode,
+		}
+		cs = append(cs, c)
+	}
+	return &Citys{Citys: cs}, nil
 }
 
 func (s *Server) AreaList(ctx context.Context, in *AreaQuery) (*Areas, error) {
@@ -67,22 +64,21 @@ func (s *Server) AreaList(ctx context.Context, in *AreaQuery) (*Areas, error) {
 		//do some operations
 		time.Sleep(time.Millisecond * 10)
 	}
-	return &Areas{
-		Areas: []*Area{
-			{
-				Name:     "上城区",
-				Citycode: "330100",
-			},
-			{
-				Name:     "江干区",
-				Citycode: "330201",
-			},
-			{
-				Name:     "西湖区",
-				Citycode: "330702",
-			},
-		},
-	}, nil
+
+	areas, err := s.TableStoreConfig.QueryAreaByCitycode(in.Citycode)
+	if err != nil {
+		log.Printf("QueryAreaByCitycode error %s", err.Error())
+		return nil, err
+	}
+	as := make([]*Area, 0)
+	for _, city := range areas {
+		area := &Area{
+			Name:     city.Name,
+			Citycode: city.Adcode,
+		}
+		as = append(as, area)
+	}
+	return &Areas{Areas: as}, nil
 }
 
 func (s *Server) Start() error {

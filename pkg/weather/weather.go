@@ -8,8 +8,11 @@ import (
 	"github.com/golang/glog"
 	"github.com/knative-sample/cloud-native-app-go/weather/pkg/city"
 	"github.com/openzipkin/zipkin-go"
+
 	//zipkingrpc "github.com/openzipkin/zipkin-go/middleware/grpc"
 	"encoding/json"
+
+	"strings"
 
 	"github.com/knative-sample/cloud-native-app-go/weather/pkg/detail"
 	zipkingrpc "github.com/openzipkin/zipkin-go/middleware/grpc"
@@ -20,8 +23,7 @@ func (wa *WebApi) CityList(w http.ResponseWriter, r *http.Request) {
 	currentSpan := wa.NewSpan("GetCityList", r.Context())
 	defer currentSpan.Finish()
 
-	// TODO 换成具体的服务地址
-	addr := "127.0.0.1:9090"
+	addr := fmt.Sprintf("%s:%s", wa.CityService.Host, wa.CityService.Port)
 	if wa.tracer == nil {
 		glog.Fatalf("wa tracer is nill")
 	}
@@ -37,9 +39,8 @@ func (wa *WebApi) CityList(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		glog.Fatalf("could not greet: %v", err)
 	}
-	glog.Infof("Greeting cityes: %s", cts)
-
-	fmt.Fprintf(w, "City Hello, %s!", r.URL.Path[1:])
+	cityInfos, _ := json.Marshal(cts)
+	fmt.Fprintf(w, string(cityInfos))
 }
 
 func (wa *WebApi) Detail(w http.ResponseWriter, r *http.Request) {
@@ -49,9 +50,15 @@ func (wa *WebApi) Detail(w http.ResponseWriter, r *http.Request) {
 	childSpan := wa.tracer.StartSpan("GetDetail", zipkin.Parent(currentSpan.Context()))
 	defer childSpan.Finish()
 
-	// TODO 1. get city areas 2. foreach area get weather info
+	// 1. get city areas 2. foreach area get weather info
+	params := strings.TrimPrefix(r.URL.Path[1:], "api/city/detail/")
+	vars := strings.Split(params, "/")
+	citycode := vars[0]
+	date := vars[1]
+	glog.Infof("citycode: %s", citycode)
+	glog.Infof("date: %s", date)
 	areaChildSpan := wa.tracer.StartSpan("GetDetail", zipkin.Parent(currentSpan.Context()))
-	areas, err := wa.getAreas("0571", areaChildSpan)
+	areas, err := wa.getAreas(citycode, areaChildSpan)
 	if err != nil {
 		glog.Errorf("getAreas error:%s", err.Error())
 	}
@@ -60,9 +67,12 @@ func (wa *WebApi) Detail(w http.ResponseWriter, r *http.Request) {
 	detailResult := []*detail.DetailInfo{}
 	for _, a := range areas {
 		detailChildSpan := wa.tracer.StartSpan("GetDetail", zipkin.Parent(currentSpan.Context()))
-		d, err := wa.getDetail(a.Citycode, "2019-11-12", detailChildSpan)
+		d, err := wa.getDetail(a.Citycode, date, detailChildSpan)
 		if err != nil {
 			glog.Errorf("getAreas error:%s", err.Error())
+		}
+		if d.Name == "" {
+			continue
 		}
 		detailChildSpan.Finish()
 
@@ -70,12 +80,12 @@ func (wa *WebApi) Detail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dbts, _ := json.Marshal(detailResult)
-	fmt.Fprintf(w, "Detail Info, %s!", dbts)
+	fmt.Fprintf(w, string(dbts))
 }
 
 func (wa *WebApi) getAreas(cityCode string, currentSpan zipkin.Span) ([]*city.Area, error) {
-	// TODO 换成具体的服务地址
-	addr := "127.0.0.1:9090"
+	//addr := "127.0.0.1:9090"
+	addr := fmt.Sprintf("%s:%s", wa.CityService.Host, wa.CityService.Port)
 	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithStatsHandler(zipkingrpc.NewClientHandler(wa.tracer)))
 	if err != nil {
 		glog.Fatalf("grpc.Dial error:%s", err.Error())
@@ -84,7 +94,7 @@ func (wa *WebApi) getAreas(cityCode string, currentSpan zipkin.Span) ([]*city.Ar
 
 	client := city.NewCityManagerClient(conn)
 
-	cts, err := client.AreaList(zipkin.NewContext(context.Background(), currentSpan), &city.AreaQuery{Citycode: "0571"})
+	cts, err := client.AreaList(zipkin.NewContext(context.Background(), currentSpan), &city.AreaQuery{Citycode: cityCode})
 	if err != nil {
 		glog.Fatalf("AreaList error: %v", err)
 	}
@@ -93,8 +103,8 @@ func (wa *WebApi) getAreas(cityCode string, currentSpan zipkin.Span) ([]*city.Ar
 }
 
 func (wa *WebApi) getDetail(cityCode, date string, currentSpan zipkin.Span) (*detail.DetailInfo, error) {
-	// TODO 换成具体的服务地址
-	addr := "127.0.0.1:9091"
+	//addr := "127.0.0.1:9091"
+	addr := fmt.Sprintf("%s:%s", wa.DetailService.Host, wa.DetailService.Port)
 	conn, err := grpc.Dial(addr, grpc.WithInsecure(), grpc.WithStatsHandler(zipkingrpc.NewClientHandler(wa.tracer)))
 	if err != nil {
 		glog.Fatalf("grpc.Dial error:%s", err.Error())
@@ -103,7 +113,7 @@ func (wa *WebApi) getDetail(cityCode, date string, currentSpan zipkin.Span) (*de
 
 	client := detail.NewDetailClient(conn)
 
-	cts, err := client.GetDetail(zipkin.NewContext(context.Background(), currentSpan), &detail.DetailQuery{Citycode: "0571", Date: date})
+	cts, err := client.GetDetail(zipkin.NewContext(context.Background(), currentSpan), &detail.DetailQuery{Citycode: cityCode, Date: date})
 	if err != nil {
 		glog.Fatalf("GetDetail error: %v", err)
 	}

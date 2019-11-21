@@ -35,6 +35,8 @@ type Weather struct {
 	Nightwind    string `json:"nightwind"`
 	Daypower     string `json:"daypower"`
 	Nightpower   string `json:"nightpower"`
+	Province     string `json:"province"`
+	Reporttime   string `json:"reporttime"`
 }
 
 type TableStoreConfig struct {
@@ -235,6 +237,7 @@ func (cm *TableStoreConfig) QueryWeather(adcode, date string) (*Weather, error) 
 		fmt.Errorf("QueryWeather Marshal error %s", err.Error())
 		return nil, err
 	}
+	glog.Infof("weatherMap: %s", cb)
 	weather := &Weather{}
 	err = json.Unmarshal(cb, weather)
 	if err != nil {
