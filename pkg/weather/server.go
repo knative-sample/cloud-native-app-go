@@ -15,10 +15,11 @@ func (wa *WebApi) Start() error {
 	wa.tracer = tracing.GetTracer(wa.ServiceName, wa.InstanceIp, wa.ZipKinEndpoint)
 
 	router := mux.NewRouter()
-	router.PathPrefix("/index").Handler(http.StripPrefix("/index", http.FileServer(http.Dir(wa.ResourceRoot))))
 	router.HandleFunc("/api/city/list", wa.CityList).Methods("GET")
 	router.HandleFunc("/api/city/detail/{name}/{date}", wa.Detail)
+	router.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir(wa.ResourceRoot))))
 	http.Handle("/", router)
+
 	router.Use(wa.AccessLog)
 	router.Use(wa.TraceLog)
 	http.ListenAndServe(fmt.Sprintf(":%s", wa.Port), nil)
